@@ -50,9 +50,8 @@ const Views = (() => {
         <div class="webcam-section">
           <p>Please allow webcam access when prompted. A live preview will appear below so you can confirm the camera is working.</p>
           <div id="webcam-preview-container" class="webcam-preview">
-            <p class="webcam-placeholder">Webcam preview will appear here...</p>
+            <button id="enable-webcam-btn" class="btn btn-secondary webcam-enable-btn" type="button">Enable Webcam</button>
           </div>
-          <button id="enable-webcam-btn" class="btn btn-secondary" type="button">Enable Webcam</button>
         </div>
 
         <button id="consent-btn" class="btn btn-primary" type="button" disabled>I Consent &amp; Continue</button>
