@@ -139,6 +139,7 @@ const App = (() => {
 
     // Grab raw gaze trail before stopping (stopCollecting clears data)
     const gazeTrail = EyeTracking.getRawGazeTrail();
+    console.log("[BAT] Gaze trail samples:", gazeTrail.length);
 
     // Stop gaze collection and get summary
     const gaze = EyeTracking.stopCollecting();

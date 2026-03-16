@@ -44,11 +44,15 @@ const DataStore = (() => {
       duration: record.duration,
       timeSpent: Math.round(record.timeSpent * 1000) / 1000,
       skipped: record.skipped || false,
+      partialAvoidance: record.partialAvoidance || false,
+      partialAvoidanceTime: record.partialAvoidanceTime || 0,
       droppedOut: record.droppedOut || false,
       gazeOnScreenPct: record.gazeOnScreenPct || 0,
       gazeLookAways: record.gazeLookAways || 0,
       avgGazeX: record.avgGazeX || 0,
-      avgGazeY: record.avgGazeY || 0
+      avgGazeY: record.avgGazeY || 0,
+      gazeOnExitPct: record.gazeOnExitPct || 0,
+      gazeTrail: record.gazeTrail || []
     };
     _stimulusRecords.push(full);
     _saveToLocalStorage();

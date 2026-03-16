@@ -145,6 +145,7 @@ const EyeTracking = (() => {
     _gazeData = [];
     _stimulusRect = stimulusRect || { x: 0, y: 0, width: window.innerWidth, height: window.innerHeight };
     _collecting = true;
+    console.log("[BAT] Started gaze collection, rect:", JSON.stringify(_stimulusRect));
   }
 
   function stopCollecting() {
