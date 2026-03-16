@@ -30,14 +30,16 @@ Alternatively:
 In your OneDrive, create this folder structure:
 
 ```
-BAT Study/
-  Data/
+Thesis - Empirical Study/
+  BAT/
+    Data/
 ```
 
 Each participant's data will be saved as:
 ```
-BAT Study/
-  Data/
+Thesis - Empirical Study/
+  BAT/
+    Data/
     P001_2026-03-16/
       responses.csv
       session.csv
@@ -73,25 +75,47 @@ BAT Study/
     "session": {
       "type": "object",
       "properties": {
-        "participantId": { "type": "string" },
-        "startTime": { "type": "string" },
-        "endTime": { "type": "string" },
-        "completed": { "type": "boolean" },
-        "lastPhase": { "type": "number" },
-        "lastStimulus": { "type": "number" },
-        "totalStimuliViewed": { "type": "number" },
-        "calibrationAccuracy": { "type": "number" }
+        "participantId": {
+          "type": "string"
+        },
+        "startTime": {
+          "type": "string"
+        },
+        "endTime": {
+          "type": "string"
+        },
+        "completed": {
+          "type": "boolean"
+        },
+        "lastPhase": {
+          "type": "integer"
+        },
+        "lastStimulus": {
+          "type": "integer"
+        },
+        "totalStimuliViewed": {
+          "type": "integer"
+        },
+        "calibrationAccuracy": {
+          "type": "number"
+        }
       }
     },
     "records": {
-      "type": "array"
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
     },
-    "gazeTrails": {
-      "type": "array"
+    "responsesCsv": {
+      "type": "string"
     },
-    "responsesCsv": { "type": "string" },
-    "sessionCsv": { "type": "string" },
-    "gazeTrailCsv": { "type": "string" }
+    "sessionCsv": {
+      "type": "string"
+    },
+    "gazeTrailCsv": {
+      "type": "string"
+    }
   }
 }
 ```
@@ -115,7 +139,7 @@ concat(triggerBody()?['session']?['participantId'], '_', formatDateTime(utcNow()
 1. Click **"+ New step"**
 2. Search for **"OneDrive for Business"** → select **"Create folder"**
 3. Set:
-   - **Folder path**: `/BAT Study/Data`
+   - **Folder path**: `/Thesis - Empirical Study/BAT/Data`
    - **Name**: select `Outputs` from the `FolderName` step (Dynamic content)
 
 ### 3.5 — Save the Responses CSV
@@ -123,7 +147,7 @@ concat(triggerBody()?['session']?['participantId'], '_', formatDateTime(utcNow()
 1. Click **"+ New step"**
 2. Search for **"OneDrive for Business"** → select **"Create file"**
 3. Set:
-   - **Folder Path**: click the folder icon → navigate to `/BAT Study/Data/` then select the dynamic `FolderName` output. Or type: `/BAT Study/Data/@{outputs('FolderName')}`
+   - **Folder Path**: click the folder icon → navigate to `/Thesis - Empirical Study/BAT/Data/` then select the dynamic `FolderName` output. Or type: `/Thesis - Empirical Study/BAT/Data/@{outputs('FolderName')}`
    - **File Name**: `responses.csv`
    - **File Content**: select `responsesCsv` from Dynamic content
 
@@ -131,7 +155,7 @@ concat(triggerBody()?['session']?['participantId'], '_', formatDateTime(utcNow()
 
 1. Click **"+ New step"** → **"Create file"** (OneDrive for Business)
 2. Set:
-   - **Folder Path**: `/BAT Study/Data/@{outputs('FolderName')}`
+   - **Folder Path**: `/Thesis - Empirical Study/BAT/Data/@{outputs('FolderName')}`
    - **File Name**: `session.csv`
    - **File Content**: select `sessionCsv` from Dynamic content
 
@@ -139,7 +163,7 @@ concat(triggerBody()?['session']?['participantId'], '_', formatDateTime(utcNow()
 
 1. Click **"+ New step"** → **"Create file"** (OneDrive for Business)
 2. Set:
-   - **Folder Path**: `/BAT Study/Data/@{outputs('FolderName')}`
+   - **Folder Path**: `/Thesis - Empirical Study/BAT/Data/@{outputs('FolderName')}`
    - **File Name**: `gaze_trail.csv`
    - **File Content**: select `gazeTrailCsv` from Dynamic content
 

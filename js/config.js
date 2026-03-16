@@ -13,7 +13,7 @@ const STUDY_CONFIG = {
   fixationDuration: 3,
 
   // Power Automate HTTP trigger URL — paste yours here (for UCL production)
-  webhookUrl: "",
+  webhookUrl: "https://default1faf88fea9984c5b93c9210a11d9a5.c2.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/9c70a33619c940dbb39667859adede65/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=KyxRg_RpPqmVd6CuyvUUwq1X4W94rFURYLpjYtq_ZEM",
 
   // Google Sheets Apps Script web app URL — for testing / temporary use
   googleSheetsUrl: "https://script.google.com/macros/s/AKfycbwDHdh0XbfrlGpd99MumuXL0O4ar6YqLDXcpDJMsU2k5Kn_r_jXQqINGwgpCrQ0RJk/exec",

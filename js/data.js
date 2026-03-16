@@ -97,15 +97,9 @@ const DataStore = (() => {
     // Save final backup
     _saveToLocalStorage();
 
-    // Try Google Sheets first (testing), then Power Automate (production)
-    const googleUrl = STUDY_CONFIG.googleSheetsUrl;
+    // Try Power Automate webhook first (production), then Google Sheets (fallback)
     const webhookUrl = STUDY_CONFIG.webhookUrl;
-
-    if (googleUrl) {
-      const result = await _postToGoogleSheets(googleUrl, payload);
-      if (result.success) return result;
-      console.warn("Google Sheets submission failed, trying webhook fallback...");
-    }
+    const googleUrl = STUDY_CONFIG.googleSheetsUrl;
 
     if (webhookUrl) {
       // Build CSV strings for Power Automate to save directly to OneDrive
@@ -116,13 +110,21 @@ const DataStore = (() => {
         sessionCsv: _buildSessionCsv(session),
         gazeTrailCsv: _buildGazeTrailCsv()
       };
-      return _postToWebhook(webhookUrl, webhookPayload);
+      const result = await _postToWebhook(webhookUrl, webhookPayload);
+      if (result.success) return result;
+      console.warn("Power Automate submission failed, trying Google Sheets fallback...");
+    }
+
+    if (googleUrl) {
+      const result = await _postToGoogleSheets(googleUrl, payload);
+      if (result.success) return result;
+      console.warn("Google Sheets submission also failed.");
     }
 
     if (!googleUrl && !webhookUrl) {
       console.warn("No submission URL configured — data saved to localStorage only.");
     }
-    return { success: false, reason: "no_url", data: payload };
+    return { success: false, reason: "all_failed", data: payload };
   }
 
   function _buildCsv(headers, rows) {
@@ -206,21 +208,21 @@ const DataStore = (() => {
   }
 
   async function _postToWebhook(url, payload) {
+    console.log("[BAT] Submitting to Power Automate...", url);
     try {
       const response = await fetch(url, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload)
       });
-
+      console.log("[BAT] Power Automate response:", response.status, response.statusText);
       if (response.ok) {
         return { success: true, data: payload };
-      } else {
-        console.error("Webhook submission failed:", response.status);
-        return { success: false, reason: "http_error", status: response.status, data: payload };
       }
+      console.error("[BAT] Power Automate error status:", response.status);
+      return { success: false, reason: "http_error", status: response.status, data: payload };
     } catch (err) {
-      console.error("Webhook submission error:", err);
+      console.error("[BAT] Webhook submission error:", err);
       return { success: false, reason: "network_error", error: err.message, data: payload };
     }
   }
