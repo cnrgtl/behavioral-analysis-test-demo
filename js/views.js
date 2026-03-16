@@ -157,8 +157,16 @@ const Views = (() => {
       dot.type = "button";
       dot.className = "calib-dot";
 
+      let _lastDotClick = 0;
       dot.addEventListener("click", (e) => {
         e.preventDefault();
+        e.stopPropagation();
+
+        // Debounce — ignore clicks within 300ms of each other
+        const now = performance.now();
+        if (now - _lastDotClick < 300) return;
+        _lastDotClick = now;
+
         clickCount++;
 
         // Fade out centre instructions on first click
