@@ -6,6 +6,7 @@
 const EyeTracking = (() => {
   let _gazeData = [];
   let _collecting = false;
+  let _collectStartTime = 0;
   let _stimulusRect = null;
   let _calibrationPoints = [];
   let _calibrationAccuracy = null;
@@ -143,6 +144,7 @@ const EyeTracking = (() => {
 
   function startCollecting(stimulusRect) {
     _gazeData = [];
+    _collectStartTime = performance.now();
     _stimulusRect = stimulusRect || { x: 0, y: 0, width: window.innerWidth, height: window.innerHeight };
     _collecting = true;
     console.log("[BAT] Started gaze collection, rect:", JSON.stringify(_stimulusRect));
@@ -157,7 +159,7 @@ const EyeTracking = (() => {
     if (_gazeData.length === 0 || !_stimulusRect) return [];
     const rect = _stimulusRect;
     return _gazeData.map(g => ({
-      t: Math.round(g.t * 100) / 100,
+      t: Math.round((g.t - _collectStartTime) / 10) / 100,
       normX: Math.round(((g.x - rect.x) / rect.width) * 10000) / 10000,
       normY: Math.round(((g.y - rect.y) / rect.height) * 10000) / 10000
     }));
