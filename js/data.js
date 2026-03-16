@@ -20,7 +20,7 @@ const DataStore = (() => {
     const lastNum = parseInt(localStorage.getItem("bat_lastParticipantNum") || "0", 10);
     const nextNum = lastNum + 1;
     localStorage.setItem("bat_lastParticipantNum", String(nextNum));
-    return "P" + String(nextNum).padStart(3, "0");
+    return "PARTICIPANT_" + String(nextNum).padStart(2, "0");
   }
 
   function startSession() {

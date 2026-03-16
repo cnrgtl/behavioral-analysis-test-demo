@@ -19,7 +19,7 @@ const STUDY_CONFIG = {
   googleSheetsUrl: "https://script.google.com/macros/s/AKfycbwDHdh0XbfrlGpd99MumuXL0O4ar6YqLDXcpDJMsU2k5Kn_r_jXQqINGwgpCrQ0RJk/exec",
 
   // Participant ID mode: "manual" (researcher types it) or "auto" (increments from localStorage)
-  participantIdMode: "manual",
+  participantIdMode: "auto",
 
   phases: [
     {
