@@ -137,6 +137,9 @@ const App = (() => {
     _dimmedAt = null;
     Views.showDimOverlay(false);
 
+    // Grab raw gaze trail before stopping (stopCollecting clears data)
+    const gazeTrail = EyeTracking.getRawGazeTrail();
+
     // Stop gaze collection and get summary
     const gaze = EyeTracking.stopCollecting();
 
@@ -163,7 +166,8 @@ const App = (() => {
       gazeLookAways: gaze.gazeLookAways,
       avgGazeX: gaze.avgGazeX,
       avgGazeY: gaze.avgGazeY,
-      gazeOnExitPct: gaze.gazeOnExitPct
+      gazeOnExitPct: gaze.gazeOnExitPct,
+      gazeTrail: gazeTrail
     });
 
     if (droppedOut) return; // dropout flow handles what's next

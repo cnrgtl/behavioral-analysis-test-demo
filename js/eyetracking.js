@@ -152,6 +152,16 @@ const EyeTracking = (() => {
     return computeSummary();
   }
 
+  function getRawGazeTrail() {
+    if (_gazeData.length === 0 || !_stimulusRect) return [];
+    const rect = _stimulusRect;
+    return _gazeData.map(g => ({
+      t: Math.round(g.t * 100) / 100,
+      normX: Math.round(((g.x - rect.x) / rect.width) * 10000) / 10000,
+      normY: Math.round(((g.y - rect.y) / rect.height) * 10000) / 10000
+    }));
+  }
+
   function computeSummary() {
     if (_gazeData.length === 0) {
       return {
@@ -234,6 +244,7 @@ const EyeTracking = (() => {
     getCalibrationAccuracy,
     startCollecting,
     stopCollecting,
+    getRawGazeTrail,
     shutdown,
     isAvailable
   };

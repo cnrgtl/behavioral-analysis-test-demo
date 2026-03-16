@@ -108,13 +108,76 @@ const DataStore = (() => {
     }
 
     if (webhookUrl) {
-      return _postToWebhook(webhookUrl, payload);
+      // Build CSV strings for Power Automate to save directly to OneDrive
+      const webhookPayload = {
+        session: session,
+        records: _stimulusRecords,
+        responsesCsv: _buildResponsesCsv(),
+        sessionCsv: _buildSessionCsv(session),
+        gazeTrailCsv: _buildGazeTrailCsv()
+      };
+      return _postToWebhook(webhookUrl, webhookPayload);
     }
 
     if (!googleUrl && !webhookUrl) {
       console.warn("No submission URL configured — data saved to localStorage only.");
     }
     return { success: false, reason: "no_url", data: payload };
+  }
+
+  function _buildCsv(headers, rows) {
+    const escape = (val) => {
+      if (val == null) return "";
+      const str = String(val);
+      if (str.includes(",") || str.includes('"') || str.includes("\n")) {
+        return '"' + str.replace(/"/g, '""') + '"';
+      }
+      return str;
+    };
+    const lines = [headers.join(",")];
+    for (const row of rows) {
+      lines.push(headers.map(h => escape(row[h])).join(","));
+    }
+    return lines.join("\n");
+  }
+
+  function _buildResponsesCsv() {
+    const headers = [
+      "participantId", "timestamp", "phaseIndex", "phaseName", "stimulusIndex",
+      "stimulusType", "stimulusContent", "duration", "timeSpent", "skipped",
+      "partialAvoidance", "partialAvoidanceTime",
+      "droppedOut", "gazeOnScreenPct", "gazeLookAways", "avgGazeX", "avgGazeY", "gazeOnExitPct"
+    ];
+    return _buildCsv(headers, _stimulusRecords);
+  }
+
+  function _buildSessionCsv(session) {
+    const headers = [
+      "participantId", "startTime", "endTime", "completed", "lastPhase",
+      "lastStimulus", "totalStimuliViewed", "calibrationAccuracy"
+    ];
+    return _buildCsv(headers, [session]);
+  }
+
+  function _buildGazeTrailCsv() {
+    const headers = ["participantId", "phaseIndex", "stimulusIndex", "stimulusContent", "timestamp", "normX", "normY"];
+    const rows = [];
+    for (const record of _stimulusRecords) {
+      if (record.gazeTrail && record.gazeTrail.length > 0) {
+        for (const point of record.gazeTrail) {
+          rows.push({
+            participantId: record.participantId,
+            phaseIndex: record.phaseIndex,
+            stimulusIndex: record.stimulusIndex,
+            stimulusContent: record.stimulusContent,
+            timestamp: point.t,
+            normX: point.normX,
+            normY: point.normY
+          });
+        }
+      }
+    }
+    return _buildCsv(headers, rows);
   }
 
   async function _postToGoogleSheets(url, payload) {

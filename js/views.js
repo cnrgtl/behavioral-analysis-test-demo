@@ -329,7 +329,7 @@ const Views = (() => {
         html += `<img class="stimulus-image" src="${_escapeHtml(stim.src)}" alt="Study stimulus" />`;
         break;
       case "video":
-        html += `<video id="stimulus-video" class="stimulus-video" autoplay playsinline><source src="${_escapeHtml(stim.src)}" type="video/mp4"></video>`;
+        html += `<video id="stimulus-video" class="stimulus-video" autoplay loop playsinline><source src="${_escapeHtml(stim.src)}" type="video/mp4"></video>`;
         break;
       case "audio":
         html += `
@@ -388,6 +388,7 @@ const Views = (() => {
         <div class="export-buttons">
           <button id="export-responses-csv" class="btn btn-primary" type="button">Responses (.csv)</button>
           <button id="export-session-csv" class="btn btn-primary" type="button">Session Summary (.csv)</button>
+          <button id="export-gaze-csv" class="btn btn-primary" type="button">Gaze Trail (.csv)</button>
           <button id="export-btn" class="btn btn-secondary" type="button">Full Backup (.json)</button>
         </div>
       </div>
@@ -415,6 +416,7 @@ const Views = (() => {
         <div class="export-buttons">
           <button id="export-responses-csv" class="btn btn-primary" type="button">Responses (.csv)</button>
           <button id="export-session-csv" class="btn btn-primary" type="button">Session Summary (.csv)</button>
+          <button id="export-gaze-csv" class="btn btn-primary" type="button">Gaze Trail (.csv)</button>
           <button id="export-btn" class="btn btn-secondary" type="button">Full Backup (.json)</button>
         </div>
       </div>
@@ -426,6 +428,7 @@ const Views = (() => {
   function _bindExportButtons() {
     document.getElementById("export-responses-csv").addEventListener("click", _exportResponsesCsv);
     document.getElementById("export-session-csv").addEventListener("click", _exportSessionCsv);
+    document.getElementById("export-gaze-csv").addEventListener("click", _exportGazeTrailCsv);
     document.getElementById("export-btn").addEventListener("click", _exportBackupJson);
   }
 
@@ -456,6 +459,41 @@ const Views = (() => {
 
     const csv = _toCsv(headers, [summary]);
     _downloadFile(csv, `bat_session_${DataStore.getParticipantId()}.csv`, "text/csv");
+  }
+
+  function _exportGazeTrailCsv() {
+    const records = DataStore.getRecords();
+    if (records.length === 0) {
+      alert("No gaze data to export.");
+      return;
+    }
+
+    const headers = ["participantId", "phaseIndex", "stimulusIndex", "stimulusContent", "timestamp", "normX", "normY"];
+    const rows = [];
+
+    for (const record of records) {
+      if (record.gazeTrail && record.gazeTrail.length > 0) {
+        for (const point of record.gazeTrail) {
+          rows.push({
+            participantId: record.participantId,
+            phaseIndex: record.phaseIndex,
+            stimulusIndex: record.stimulusIndex,
+            stimulusContent: record.stimulusContent,
+            timestamp: point.t,
+            normX: point.normX,
+            normY: point.normY
+          });
+        }
+      }
+    }
+
+    if (rows.length === 0) {
+      alert("No gaze trail data collected.");
+      return;
+    }
+
+    const csv = _toCsv(headers, rows);
+    _downloadFile(csv, `bat_gaze_trail_${DataStore.getParticipantId()}.csv`, "text/csv");
   }
 
   function _exportBackupJson() {
