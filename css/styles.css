@@ -193,7 +193,11 @@ kbd {
 }
 
 .webcam-section {
-  margin-bottom: 1.5rem;
+  margin-bottom: 1rem;
+}
+
+.consent-screen .btn-primary {
+  width: 280px;
 }
 
 .webcam-section p {
