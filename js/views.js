@@ -6,22 +6,39 @@ const Views = (() => {
   const app = () => document.getElementById("app");
 
   function welcome(onStart) {
+    const isPhone4 = STUDY_CONFIG.participantIdMode === "phone4";
     const isManual = STUDY_CONFIG.participantIdMode === "manual";
+    const showInput = isPhone4 || isManual;
+
     app().innerHTML = `
       <div class="screen welcome-screen">
         <h1>${STUDY_CONFIG.title}</h1>
         <p class="description">${STUDY_CONFIG.description}</p>
-        ${isManual ? `
+        ${isPhone4 ? `
+          <div class="form-group">
+            <label for="participant-id">Last 4 digits of your phone number</label>
+            <input type="text" id="participant-id" placeholder="e.g. 9406" autocomplete="off" maxlength="4" inputmode="numeric" pattern="[0-9]*" />
+          </div>
+        ` : isManual ? `
           <div class="form-group">
             <label for="participant-id">Participant ID</label>
             <input type="text" id="participant-id" placeholder="e.g. P001" autocomplete="off" />
           </div>
         ` : ""}
-        <button id="start-btn" class="btn btn-primary" type="button"${isManual ? " disabled" : ""}>Start Study</button>
+        <button id="start-btn" class="btn btn-primary" type="button"${showInput ? " disabled" : ""}>Start Study</button>
       </div>
     `;
 
-    if (isManual) {
+    if (isPhone4) {
+      const input = document.getElementById("participant-id");
+      const btn = document.getElementById("start-btn");
+      input.addEventListener("input", () => {
+        // Only allow digits
+        input.value = input.value.replace(/\D/g, '').slice(0, 4);
+        btn.disabled = input.value.length !== 4;
+      });
+      btn.addEventListener("click", () => onStart("PARTICIPANT_" + input.value));
+    } else if (isManual) {
       const input = document.getElementById("participant-id");
       const btn = document.getElementById("start-btn");
       input.addEventListener("input", () => {
