@@ -1,0 +1,501 @@
+/* ── Reset & Base ──────────────────────────────────────────────────── */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html, body {
+  height: 100%;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  background: #1a1a2e;
+  color: #e0e0e0;
+  overflow: hidden;
+}
+
+/* ── App container ─────────────────────────────────────────────────── */
+#app {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  padding: 2rem;
+}
+
+/* ── Generic screen layout ─────────────────────────────────────────── */
+.screen {
+  max-width: 720px;
+  width: 100%;
+  text-align: center;
+}
+
+.screen h1 {
+  font-size: 2.4rem;
+  margin-bottom: 0.75rem;
+  color: #fff;
+}
+
+.screen h2 {
+  font-size: 1.8rem;
+  margin-bottom: 0.75rem;
+  color: #fff;
+}
+
+.screen p {
+  font-size: 1.05rem;
+  line-height: 1.6;
+  margin-bottom: 1rem;
+  color: #ccc;
+}
+
+.screen ul {
+  text-align: left;
+  margin: 0.75rem auto 1.5rem;
+  max-width: 600px;
+  padding-left: 1.5rem;
+}
+
+.screen ul li {
+  margin-bottom: 0.5rem;
+  line-height: 1.5;
+}
+
+.description {
+  color: #aaa;
+  margin-bottom: 2rem;
+}
+
+/* ── Buttons ───────────────────────────────────────────────────────── */
+.btn {
+  display: inline-block;
+  padding: 0.75rem 2rem;
+  font-size: 1.05rem;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.2s, opacity 0.2s;
+  font-family: inherit;
+}
+
+.btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.btn-primary {
+  background: #4361ee;
+  color: #fff;
+}
+.btn-primary:hover:not(:disabled) {
+  background: #3a56d4;
+}
+
+.btn-secondary {
+  background: #333;
+  color: #ccc;
+}
+.btn-secondary:hover:not(:disabled) {
+  background: #444;
+}
+
+.btn-danger {
+  background: #e63946;
+  color: #fff;
+}
+.btn-danger:hover:not(:disabled) {
+  background: #c5303c;
+}
+
+kbd {
+  display: inline-block;
+  padding: 0.15rem 0.5rem;
+  background: #333;
+  border: 1px solid #555;
+  border-radius: 4px;
+  font-size: 0.9rem;
+  font-family: monospace;
+}
+
+/* ── Form ──────────────────────────────────────────────────────────── */
+.form-group {
+  margin-bottom: 1.5rem;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 0.4rem;
+  font-weight: 600;
+  color: #ccc;
+}
+
+.form-group input {
+  padding: 0.6rem 1rem;
+  font-size: 1rem;
+  border: 1px solid #444;
+  border-radius: 6px;
+  background: #222;
+  color: #fff;
+  width: 200px;
+  text-align: center;
+  font-family: inherit;
+}
+
+.form-group input:focus {
+  outline: none;
+  border-color: #4361ee;
+}
+
+/* ── Consent / Webcam ──────────────────────────────────────────────── */
+.consent-text {
+  text-align: left;
+  background: #16213e;
+  border-radius: 8px;
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.webcam-section {
+  margin-bottom: 1.5rem;
+}
+
+.webcam-preview {
+  width: 320px;
+  height: 240px;
+  margin: 1rem auto;
+  background: #000;
+  border-radius: 8px;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.webcam-placeholder {
+  color: #666;
+  font-size: 0.9rem;
+}
+
+.webcam-video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transform: scaleX(-1);
+}
+
+.error {
+  color: #e63946;
+}
+
+/* ── Calibration ───────────────────────────────────────────────────── */
+.calibration-screen {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 90;
+}
+
+.calib-header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  text-align: center;
+  padding: 1rem;
+  background: rgba(26, 26, 46, 0.85);
+  z-index: 102;
+  pointer-events: none;
+}
+
+.calib-header h2 {
+  color: #fff;
+  margin-bottom: 0.3rem;
+  font-size: 1.3rem;
+}
+
+.calib-header p {
+  color: #aaa;
+  font-size: 0.95rem;
+  margin-bottom: 0.2rem;
+}
+
+.calibration-area {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 100;
+}
+
+.calib-dot {
+  position: absolute;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: #4361ee;
+  border: 3px solid #6b8cff;
+  color: #fff;
+  font-size: 0.85rem;
+  font-weight: 700;
+  font-family: inherit;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transform: translate(-50%, -50%);
+  cursor: pointer;
+  transition: transform 0.15s, background 0.15s, border-color 0.15s;
+  z-index: 101;
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+}
+
+.calib-dot:hover {
+  transform: translate(-50%, -50%) scale(1.15);
+  background: #5a7bff;
+}
+
+.calib-dot:active {
+  transform: translate(-50%, -50%) scale(0.9);
+}
+
+.calib-dot-clicked {
+  background: #60d394;
+  border-color: #8eedb8;
+}
+
+.calib-dot-done {
+  background: #60d394;
+  border-color: #8eedb8;
+  transform: translate(-50%, -50%) scale(0);
+  transition: transform 0.3s;
+}
+
+.calib-dot-validation {
+  background: #60d394;
+  border-color: #8eedb8;
+  width: 24px;
+  height: 24px;
+  font-size: 0;
+  cursor: default;
+  animation: pulse 1s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { transform: translate(-50%, -50%) scale(1); }
+  50% { transform: translate(-50%, -50%) scale(1.4); }
+}
+
+/* ── Phase Intro ───────────────────────────────────────────────────── */
+.phase-label {
+  font-size: 0.9rem;
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  color: #888;
+  margin-bottom: 0.5rem;
+}
+
+/* ── Stimulus ──────────────────────────────────────────────────────── */
+.stimulus-screen {
+  max-width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+  padding: 0;
+}
+
+.stimulus-info {
+  position: fixed;
+  top: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 0.8rem;
+  color: #666;
+  z-index: 10;
+}
+
+.stimulus-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  padding: 2rem;
+}
+
+.stimulus-text {
+  font-size: 3rem;
+  font-weight: 700;
+  color: #fff;
+  text-align: center;
+  line-height: 1.3;
+}
+
+.stimulus-image {
+  max-width: 90vw;
+  max-height: 85vh;
+  object-fit: contain;
+  border-radius: 4px;
+}
+
+.stimulus-video {
+  max-width: 90vw;
+  max-height: 85vh;
+  border-radius: 4px;
+}
+
+/* ── Audio indicator ───────────────────────────────────────────────── */
+.audio-indicator {
+  text-align: center;
+}
+
+.audio-indicator p {
+  font-size: 1.2rem;
+  color: #aaa;
+  margin-top: 1rem;
+}
+
+.audio-wave {
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 6px;
+  height: 60px;
+}
+
+.audio-wave span {
+  display: block;
+  width: 8px;
+  background: #4361ee;
+  border-radius: 4px;
+  animation: wave 1.2s ease-in-out infinite;
+}
+
+.audio-wave span:nth-child(1) { height: 20px; animation-delay: 0s; }
+.audio-wave span:nth-child(2) { height: 35px; animation-delay: 0.15s; }
+.audio-wave span:nth-child(3) { height: 50px; animation-delay: 0.3s; }
+.audio-wave span:nth-child(4) { height: 35px; animation-delay: 0.45s; }
+.audio-wave span:nth-child(5) { height: 20px; animation-delay: 0.6s; }
+
+@keyframes wave {
+  0%, 100% { transform: scaleY(1); }
+  50% { transform: scaleY(1.8); }
+}
+
+/* ── Countdown ─────────────────────────────────────────────────────── */
+.countdown {
+  position: fixed;
+  top: 16px;
+  right: 20px;
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.5);
+  font-variant-numeric: tabular-nums;
+  z-index: 50;
+  pointer-events: none;
+}
+
+/* ── Stop button ───────────────────────────────────────────────────── */
+.stop-btn {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  padding: 0.5rem 1.2rem;
+  font-size: 0.9rem;
+  background: rgba(230, 57, 70, 0.8);
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  z-index: 50;
+  font-family: inherit;
+  transition: background 0.2s;
+}
+
+.stop-btn:hover {
+  background: rgba(230, 57, 70, 1);
+}
+
+/* ── Modal ─────────────────────────────────────────────────────────── */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 200;
+}
+
+.modal {
+  background: #1e1e30;
+  border-radius: 10px;
+  padding: 2rem;
+  max-width: 420px;
+  width: 90%;
+  text-align: center;
+}
+
+.modal h2 {
+  margin-bottom: 0.75rem;
+  color: #fff;
+}
+
+.modal p {
+  color: #aaa;
+  margin-bottom: 1.5rem;
+  line-height: 1.5;
+}
+
+.modal-buttons {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+}
+
+/* ── Break / Completion / Dropout ──────────────────────────────────── */
+.summary-box {
+  background: #16213e;
+  border-radius: 8px;
+  padding: 1.2rem 1.5rem;
+  display: inline-block;
+  text-align: left;
+  margin-bottom: 1.5rem;
+}
+
+.summary-box p {
+  margin-bottom: 0.4rem;
+  font-size: 1rem;
+}
+
+.success-msg {
+  color: #60d394;
+}
+
+.warning-msg {
+  color: #f4a261;
+}
+
+.export-label {
+  color: #888;
+  font-size: 0.9rem;
+  margin-bottom: 0.5rem;
+}
+
+.export-buttons {
+  display: flex;
+  gap: 0.75rem;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+/* ── Hidden utility ────────────────────────────────────────────────── */
+.hidden {
+  display: none !important;
+}

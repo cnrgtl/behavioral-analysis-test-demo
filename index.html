@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Behaviour Avoidance Test</title>
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+  <div id="app"></div>
+
+  <!-- Stop Study button — visible during study phases -->
+  <button id="stop-btn" class="stop-btn hidden" type="button">Stop Study</button>
+
+  <!-- Countdown timer overlay — visible during stimulus display -->
+  <div id="countdown" class="countdown hidden">30</div>
+
+  <!-- Confirmation modal for stopping the study -->
+  <div id="modal-overlay" class="modal-overlay hidden">
+    <div class="modal">
+      <h2>Are you sure?</h2>
+      <p>If you stop now, your data collected so far will be saved. You will not be able to resume.</p>
+      <div class="modal-buttons">
+        <button id="modal-cancel" class="btn btn-secondary" type="button">Cancel</button>
+        <button id="modal-confirm" class="btn btn-danger" type="button">Yes, Stop Study</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- WebGazer loaded before app scripts -->
+  <script src="lib/webgazer.min.js"></script>
+
+  <!-- App scripts in dependency order -->
+  <script src="js/config.js"></script>
+  <script src="js/timer.js"></script>
+  <script src="js/eyetracking.js"></script>
+  <script src="js/data.js"></script>
+  <script src="js/views.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
