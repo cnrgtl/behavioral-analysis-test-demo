@@ -48,9 +48,12 @@ const EyeTracking = (() => {
       // Hide WebGazer's default video and overlay elements
       webgazer.showVideoPreview(false).showPredictionPoints(false).showFaceOverlay(false).showFaceFeedbackBox(false);
 
-      // Remove WebGazer's built-in document click/mousemove listeners so that
-      // only our explicit recordScreenPosition calls train the model during calibration.
-      webgazer.removeMouseEventListeners();
+      // Keep WebGazer's click listeners active during calibration — it trains
+      // the regression model from click positions. We only disable mousemove
+      // training so that random mouse movements don't add noise.
+      if (typeof webgazer.params !== "undefined") {
+        webgazer.params.moveTickSize = Infinity; // disable mousemove training
+      }
 
       // WebGazer injects container elements with z-index:99999 that can block clicks.
       // Ensure they don't intercept pointer events.
@@ -87,11 +90,14 @@ const EyeTracking = (() => {
     const start = performance.now();
 
     return new Promise((resolve) => {
-      const interval = setInterval(() => {
-        // WebGazer's getCurrentPrediction
-        const pred = webgazer.getCurrentPrediction();
-        if (pred) {
-          samples.push({ x: pred.x, y: pred.y });
+      const interval = setInterval(async () => {
+        try {
+          const pred = await webgazer.getCurrentPrediction();
+          if (pred && typeof pred.x === "number" && typeof pred.y === "number") {
+            samples.push({ x: pred.x, y: pred.y });
+          }
+        } catch (e) {
+          // ignore prediction errors
         }
         if (performance.now() - start > durationMs) {
           clearInterval(interval);
@@ -99,16 +105,31 @@ const EyeTracking = (() => {
             resolve(0);
             return;
           }
-          // Compute average distance from target
-          const avgDist = samples.reduce((sum, s) => {
+
+          // Drop first 40% of samples — warm-up noise while model converges
+          const dropCount = Math.floor(samples.length * 0.4);
+          const stable = samples.slice(dropCount);
+
+          if (stable.length === 0) {
+            resolve(0);
+            return;
+          }
+
+          // Use median distance (robust against outliers) instead of mean
+          const distances = stable.map(s => {
             const dx = s.x - targetX;
             const dy = s.y - targetY;
-            return sum + Math.sqrt(dx * dx + dy * dy);
-          }, 0) / samples.length;
+            return Math.sqrt(dx * dx + dy * dy);
+          }).sort((a, b) => a - b);
 
-          // Convert to accuracy score (0-100).
-          // 100px distance = ~50% accuracy, 0 distance = 100%
-          const accuracy = Math.max(0, Math.min(100, 100 - (avgDist / 2)));
+          const medianDist = distances[Math.floor(distances.length / 2)];
+
+          // Scale relative to screen size. For webcam-based tracking, ~10% of screen
+          // diagonal is good precision. Use half the diagonal as the 0% threshold.
+          const screenDiag = Math.hypot(window.innerWidth, window.innerHeight);
+          const maxDist = screenDiag * 0.5;
+          const accuracy = Math.max(0, Math.min(100, (1 - medianDist / maxDist) * 100));
+          console.log(`[BAT Calibration] total: ${samples.length}, used: ${stable.length}, medianDist: ${Math.round(medianDist)}px, maxDist: ${Math.round(maxDist)}px, accuracy: ${Math.round(accuracy)}%, target: (${Math.round(targetX)}, ${Math.round(targetY)}), lastSample: (${Math.round(stable[stable.length-1].x)}, ${Math.round(stable[stable.length-1].y)})`);
           _calibrationAccuracy = accuracy;
           resolve(accuracy);
         }
@@ -137,7 +158,8 @@ const EyeTracking = (() => {
         gazeOnScreenPct: 0,
         gazeLookAways: 0,
         avgGazeX: 0,
-        avgGazeY: 0
+        avgGazeY: 0,
+        gazeOnExitPct: 0
       };
     }
 
@@ -147,6 +169,13 @@ const EyeTracking = (() => {
     let wasOnScreen = true;
     let sumX = 0;
     let sumY = 0;
+    let onExitCount = 0;
+
+    // Get Stop Study button bounds
+    const exitBtn = document.getElementById("stop-btn");
+    const exitRect = exitBtn ? exitBtn.getBoundingClientRect() : null;
+    // Add padding around the button to catch nearby glances
+    const exitPad = 30;
 
     for (let i = 0; i < _gazeData.length; i++) {
       const g = _gazeData[i];
@@ -155,7 +184,6 @@ const EyeTracking = (() => {
 
       if (isOn) {
         onScreenCount++;
-        // Normalise to 0-1 relative to stimulus rect
         sumX += (g.x - rect.x) / rect.width;
         sumY += (g.y - rect.y) / rect.height;
       }
@@ -164,13 +192,21 @@ const EyeTracking = (() => {
         lookAways++;
       }
       wasOnScreen = isOn;
+
+      // Check if gaze is near the exit button
+      if (exitRect) {
+        const isOnExit = g.x >= exitRect.x - exitPad && g.x <= exitRect.right + exitPad &&
+                         g.y >= exitRect.y - exitPad && g.y <= exitRect.bottom + exitPad;
+        if (isOnExit) onExitCount++;
+      }
     }
 
     return {
       gazeOnScreenPct: Math.round((onScreenCount / _gazeData.length) * 10000) / 100,
       gazeLookAways: lookAways,
       avgGazeX: onScreenCount > 0 ? Math.round((sumX / onScreenCount) * 10000) / 10000 : 0,
-      avgGazeY: onScreenCount > 0 ? Math.round((sumY / onScreenCount) * 10000) / 10000 : 0
+      avgGazeY: onScreenCount > 0 ? Math.round((sumY / onScreenCount) * 10000) / 10000 : 0,
+      gazeOnExitPct: Math.round((onExitCount / _gazeData.length) * 10000) / 100
     };
   }
 

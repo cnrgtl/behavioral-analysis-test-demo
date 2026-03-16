@@ -8,7 +8,11 @@ const App = (() => {
   let _currentStimulus = 0;
   let _studyActive = false;
   let _spacebarEnabled = false;
+  let _dimmed = false;
+  let _dimmedAt = null;
   let _preloadedElements = [];
+  let _recoveryInterval = null;
+  let _fixationTimeout = null;
 
   // ── DOM refs ───────────────────────────────────────────────────────────
   const stopBtn       = () => document.getElementById("stop-btn");
@@ -49,13 +53,6 @@ const App = (() => {
   }
 
   async function _onBeginStudy() {
-    // Request fullscreen
-    try {
-      await document.documentElement.requestFullscreen();
-    } catch (e) {
-      // Non-critical — continue without fullscreen
-    }
-
     DataStore.startSession();
     _studyActive = true;
     _currentPhase = 0;
@@ -93,11 +90,22 @@ const App = (() => {
       return;
     }
 
+    // Show fixation cross before stimulus
+    _showCountdown(false);
+    _fixationTimeout = Views.fixation(STUDY_CONFIG.fixationDuration, _presentStimulus);
+  }
+
+  function _presentStimulus() {
+    _fixationTimeout = null;
+    _dimmed = false;
+    _dimmedAt = null;
+
+    const phase = STUDY_CONFIG.phases[_currentPhase];
     const stim = phase.stimuli[_currentStimulus];
     const rect = Views.stimulus(stim, _currentPhase, _currentStimulus, phase.stimuli.length);
 
-    // Show countdown, enable spacebar
-    _showCountdown(true);
+    // No countdown shown — clean stimulus view
+    _showCountdown(false);
     _spacebarEnabled = true;
 
     // Start eye-tracking collection
@@ -106,10 +114,7 @@ const App = (() => {
     // Start precision timer
     Timer.start(
       STUDY_CONFIG.stimulusDuration,
-      (remaining) => {
-        const el = countdownEl();
-        if (el) el.textContent = Math.ceil(remaining);
-      },
+      () => {},  // no visible countdown
       () => _onStimulusEnd(false)  // timer expired naturally
     );
   }
@@ -120,6 +125,17 @@ const App = (() => {
     _spacebarEnabled = false;
     const timeSpent = Timer.stop();
     _showCountdown(false);
+
+    // Calculate partial avoidance time
+    const partialAvoidanceTime = _dimmedAt
+      ? Math.round((performance.now() - _dimmedAt) / 1000 * 1000) / 1000
+      : 0;
+    const partialAvoidance = _dimmedAt != null;
+
+    // Reset dim state
+    _dimmed = false;
+    _dimmedAt = null;
+    Views.showDimOverlay(false);
 
     // Stop gaze collection and get summary
     const gaze = EyeTracking.stopCollecting();
@@ -140,17 +156,30 @@ const App = (() => {
       duration: STUDY_CONFIG.stimulusDuration,
       timeSpent: timeSpent,
       skipped: skipped,
+      partialAvoidance: partialAvoidance,
+      partialAvoidanceTime: partialAvoidanceTime,
       droppedOut: droppedOut || false,
       gazeOnScreenPct: gaze.gazeOnScreenPct,
       gazeLookAways: gaze.gazeLookAways,
       avgGazeX: gaze.avgGazeX,
-      avgGazeY: gaze.avgGazeY
+      avgGazeY: gaze.avgGazeY,
+      gazeOnExitPct: gaze.gazeOnExitPct
     });
 
     if (droppedOut) return; // dropout flow handles what's next
 
     _currentStimulus++;
-    _startNextStimulus();
+
+    if (skipped) {
+      // Show recovery screen for 20 seconds before next stimulus
+      _showCountdown(false);
+      _recoveryInterval = Views.recovery(STUDY_CONFIG.stimulusDuration, () => {
+        _recoveryInterval = null;
+        _startNextStimulus();
+      });
+    } else {
+      _startNextStimulus();
+    }
   }
 
   // ── End study ─────────────────────────────────────────────────────────
@@ -163,11 +192,6 @@ const App = (() => {
 
     // Shut down eye tracking
     EyeTracking.shutdown();
-
-    // Exit fullscreen
-    if (document.fullscreenElement) {
-      try { await document.exitFullscreen(); } catch (e) { /* ignore */ }
-    }
 
     // Submit data
     const result = await DataStore.submitData(completed);
@@ -199,6 +223,18 @@ const App = (() => {
   function _confirmStop() {
     _hideStopModal();
 
+    // Clear recovery interval if active
+    if (_recoveryInterval) {
+      clearInterval(_recoveryInterval);
+      _recoveryInterval = null;
+    }
+
+    // Clear fixation timeout if active
+    if (_fixationTimeout) {
+      clearTimeout(_fixationTimeout);
+      _fixationTimeout = null;
+    }
+
     // If timer is running, end current stimulus as dropped out
     if (Timer.isRunning()) {
       _onStimulusEnd(false, true);
@@ -221,7 +257,24 @@ const App = (() => {
         if (now - _lastSpaceTime < 300) return;
         _lastSpaceTime = now;
 
-        _onStimulusEnd(true);
+        if (!_dimmed) {
+          // First press — dim the stimulus, show skip prompt
+          _dimmed = true;
+          _dimmedAt = performance.now();
+          Views.showDimOverlay(true);
+        } else {
+          // Second press — confirm skip
+          Views.showDimOverlay(false);
+          _onStimulusEnd(true);
+        }
+      }
+
+      if (e.code === "Escape" && _spacebarEnabled && _dimmed) {
+        e.preventDefault();
+        // Un-dim — participant changed their mind
+        _dimmed = false;
+        Views.showDimOverlay(false);
+        // Keep _dimmedAt set so we still record that partial avoidance happened
       }
     });
   }

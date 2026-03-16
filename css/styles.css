@@ -198,10 +198,12 @@ kbd {
 
 .calib-header {
   position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
   text-align: center;
+  z-index: 100;
+  transition: opacity 0.5s;
   padding: 1rem;
   background: rgba(26, 26, 46, 0.85);
   z-index: 102;
@@ -210,14 +212,14 @@ kbd {
 
 .calib-header h2 {
   color: #fff;
-  margin-bottom: 0.3rem;
-  font-size: 1.3rem;
+  margin-bottom: 0.5rem;
+  font-size: 1.6rem;
 }
 
 .calib-header p {
   color: #aaa;
-  font-size: 0.95rem;
-  margin-bottom: 0.2rem;
+  font-size: 1.1rem;
+  margin-bottom: 0.3rem;
 }
 
 .calibration-area {
@@ -229,35 +231,82 @@ kbd {
   z-index: 100;
 }
 
-.calib-dot {
+.calib-header-hidden {
+  opacity: 0;
+  transition: opacity 0.5s;
+  pointer-events: none;
+}
+
+.calib-dot-wrapper {
   position: absolute;
+  transform: translate(-50%, -50%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 101;
+}
+
+.calib-ring {
+  position: absolute;
+  pointer-events: none;
+  transform: rotate(-90deg);
+}
+
+.calib-ring-bg {
+  fill: none;
+  stroke: rgba(255, 255, 255, 0.1);
+  stroke-width: 4;
+}
+
+.calib-ring-progress {
+  fill: none;
+  stroke: #60d394;
+  stroke-width: 4;
+  stroke-linecap: round;
+  transition: stroke-dashoffset 0.2s ease;
+}
+
+.calib-ring-done {
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+
+.calib-dot-label {
+  margin-top: 40px;
+  font-size: 0.85rem;
+  color: rgba(255, 255, 255, 0.5);
+  pointer-events: none;
+  user-select: none;
+  white-space: nowrap;
+}
+
+.calib-dot {
+  position: relative;
   width: 48px;
   height: 48px;
   border-radius: 50%;
   background: #4361ee;
   border: 3px solid #6b8cff;
   color: #fff;
-  font-size: 0.85rem;
+  font-size: 0;
   font-weight: 700;
   font-family: inherit;
   display: flex;
   align-items: center;
   justify-content: center;
-  transform: translate(-50%, -50%);
   cursor: pointer;
   transition: transform 0.15s, background 0.15s, border-color 0.15s;
-  z-index: 101;
   -webkit-tap-highlight-color: transparent;
   user-select: none;
 }
 
 .calib-dot:hover {
-  transform: translate(-50%, -50%) scale(1.15);
+  transform: scale(1.15);
   background: #5a7bff;
 }
 
 .calib-dot:active {
-  transform: translate(-50%, -50%) scale(0.9);
+  transform: scale(0.9);
 }
 
 .calib-dot-clicked {
@@ -268,23 +317,66 @@ kbd {
 .calib-dot-done {
   background: #60d394;
   border-color: #8eedb8;
-  transform: translate(-50%, -50%) scale(0);
+  transform: scale(0);
   transition: transform 0.3s;
 }
 
 .calib-dot-validation {
   background: #60d394;
   border-color: #8eedb8;
-  width: 24px;
-  height: 24px;
-  font-size: 0;
+  width: 48px;
+  height: 48px;
   cursor: default;
-  animation: pulse 1s ease-in-out infinite;
+  animation: pulse 1.5s ease-in-out infinite;
+  position: relative;
+}
+
+.calib-validation-wrapper {
+  position: absolute;
+}
+
+.calib-validation-countdown {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: rgba(0, 0, 0, 0.5);
+  user-select: none;
+  pointer-events: none;
 }
 
 @keyframes pulse {
-  0%, 100% { transform: translate(-50%, -50%) scale(1); }
-  50% { transform: translate(-50%, -50%) scale(1.4); }
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.15); }
+}
+
+.calib-area-complete {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+}
+
+.calib-complete-container {
+  text-align: center;
+}
+
+.calib-accuracy {
+  font-size: 1.1rem;
+  color: #aaa;
+  margin-bottom: 0.5rem;
+}
+
+.calib-quality {
+  font-size: 1rem;
+  font-weight: 600;
+  margin-bottom: 1.5rem;
+}
+
+.calib-excellent { color: #60d394; }
+.calib-good { color: #4361ee; }
+.calib-poor { color: #e63946; }
+
+.calib-retry-btn {
+  margin-left: 0.75rem;
 }
 
 /* ── Phase Intro ───────────────────────────────────────────────────── */
@@ -388,11 +480,12 @@ kbd {
 /* ── Countdown ─────────────────────────────────────────────────────── */
 .countdown {
   position: fixed;
-  top: 16px;
-  right: 20px;
-  font-size: 1.6rem;
-  font-weight: 700;
-  color: rgba(255, 255, 255, 0.5);
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 1.2rem;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.3);
   font-variant-numeric: tabular-nums;
   z-index: 50;
   pointer-events: none;
@@ -493,6 +586,70 @@ kbd {
   gap: 0.75rem;
   justify-content: center;
   flex-wrap: wrap;
+}
+
+/* ── Fixation cross ──────────────────────────────────────────────── */
+.fixation-screen {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+}
+
+.fixation-cross {
+  font-size: 4rem;
+  font-weight: 300;
+  color: rgba(255, 255, 255, 0.7);
+  line-height: 1;
+  user-select: none;
+}
+
+/* ── Dim overlay (partial avoidance) ──────────────────────────────── */
+.dim-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 150;
+  opacity: 0;
+  transition: opacity 0.3s;
+  pointer-events: none;
+}
+
+.dim-overlay-visible {
+  opacity: 1;
+}
+
+.dim-prompt {
+  font-size: 1.2rem;
+  color: rgba(255, 255, 255, 0.5);
+  font-weight: 400;
+  user-select: none;
+}
+
+/* ── Recovery screen ──────────────────────────────────────────────── */
+.recovery-screen {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+}
+
+.recovery-text {
+  font-size: 1.5rem;
+  color: rgba(255, 255, 255, 0.6);
+  text-align: center;
+}
+
+.recovery-text #recovery-countdown {
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+  color: #fff;
 }
 
 /* ── Hidden utility ────────────────────────────────────────────────── */

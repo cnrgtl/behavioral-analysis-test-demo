@@ -86,7 +86,8 @@ function writeResponses(ss, records) {
   var headers = [
     "participantId", "timestamp", "phaseIndex", "phaseName", "stimulusIndex",
     "stimulusType", "stimulusContent", "duration", "timeSpent", "skipped",
-    "droppedOut", "gazeOnScreenPct", "gazeLookAways", "avgGazeX", "avgGazeY"
+    "partialAvoidance", "partialAvoidanceTime",
+    "droppedOut", "gazeOnScreenPct", "gazeLookAways", "avgGazeX", "avgGazeY", "gazeOnExitPct"
   ];
 
   // Add headers if sheet is empty

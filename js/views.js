@@ -120,19 +120,52 @@ const Views = (() => {
       area.innerHTML = "";
       const pos = positions[index];
 
-      // Convert normalised position to pixel position for the dot
+      const wrapper = document.createElement("div");
+      wrapper.className = "calib-dot-wrapper";
+      wrapper.style.left = (pos.x * 100) + "%";
+      wrapper.style.top = (pos.y * 100) + "%";
+
+      // SVG progress ring
+      const ringSize = 64;
+      const strokeWidth = 4;
+      const radius = (ringSize - strokeWidth) / 2;
+      const circumference = 2 * Math.PI * radius;
+
+      const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+      svg.setAttribute("class", "calib-ring");
+      svg.setAttribute("width", ringSize);
+      svg.setAttribute("height", ringSize);
+
+      const bgCircle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+      bgCircle.setAttribute("cx", ringSize / 2);
+      bgCircle.setAttribute("cy", ringSize / 2);
+      bgCircle.setAttribute("r", radius);
+      bgCircle.setAttribute("class", "calib-ring-bg");
+
+      const progressCircle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+      progressCircle.setAttribute("cx", ringSize / 2);
+      progressCircle.setAttribute("cy", ringSize / 2);
+      progressCircle.setAttribute("r", radius);
+      progressCircle.setAttribute("class", "calib-ring-progress");
+      progressCircle.style.strokeDasharray = circumference;
+      progressCircle.style.strokeDashoffset = circumference;
+
+      svg.appendChild(bgCircle);
+      svg.appendChild(progressCircle);
+
       const dot = document.createElement("button");
       dot.type = "button";
       dot.className = "calib-dot";
-      dot.style.left = (pos.x * 100) + "%";
-      dot.style.top = (pos.y * 100) + "%";
-
-      // Show click count on the dot
-      dot.textContent = "0";
 
       dot.addEventListener("click", (e) => {
         e.preventDefault();
         clickCount++;
+
+        // Fade out centre instructions on first click
+        const header = document.getElementById("calib-header");
+        if (header && !header.classList.contains("calib-header-hidden")) {
+          header.classList.add("calib-header-hidden");
+        }
 
         // Register this click position with WebGazer for training
         const pixelX = pos.x * window.innerWidth;
@@ -141,20 +174,23 @@ const Views = (() => {
           webgazer.recordScreenPosition(pixelX, pixelY, "click");
         }
 
+        // Update ring progress
+        const fraction = clickCount / clicksNeeded;
+        progressCircle.style.strokeDashoffset = circumference * (1 - fraction);
+
         // Visual feedback
-        dot.textContent = String(clickCount);
         dot.classList.add("calib-dot-clicked");
         setTimeout(() => dot.classList.remove("calib-dot-clicked"), 200);
 
-        progress.textContent = `Point ${currentPoint + 1} of ${positions.length} — Clicks: ${clickCount} / ${clicksNeeded}`;
+        progress.textContent = `Point ${currentPoint + 1} of ${positions.length}`;
 
         if (clickCount >= clicksNeeded) {
           dot.classList.add("calib-dot-done");
+          svg.classList.add("calib-ring-done");
           setTimeout(() => {
             currentPoint++;
             clickCount = 0;
             if (currentPoint < positions.length) {
-              progress.textContent = `Point ${currentPoint + 1} of ${positions.length} — Clicks: 0 / ${clicksNeeded}`;
               showPoint(currentPoint);
             } else {
               runValidation();
@@ -163,38 +199,84 @@ const Views = (() => {
         }
       });
 
-      area.appendChild(dot);
+      wrapper.appendChild(svg);
+      wrapper.appendChild(dot);
+      area.appendChild(wrapper);
     }
 
     function runValidation() {
       area.innerHTML = "";
-      instructions.textContent = "Accuracy check: look at the green dot for 3 seconds...";
-      progress.textContent = "Measuring...";
+      const header = document.getElementById("calib-header");
+      if (header) header.classList.add("calib-header-hidden");
+      progress.textContent = "";
+
+      const wrapper = document.createElement("div");
+      wrapper.className = "calib-dot-wrapper calib-validation-wrapper";
+      wrapper.style.left = "50%";
+      wrapper.style.top = "50%";
 
       const dot = document.createElement("div");
       dot.className = "calib-dot calib-dot-validation";
-      dot.style.left = "50%";
-      dot.style.top = "50%";
-      area.appendChild(dot);
+
+      const countdownText = document.createElement("span");
+      countdownText.className = "calib-validation-countdown";
+      countdownText.textContent = "3";
+
+      dot.appendChild(countdownText);
+      wrapper.appendChild(dot);
+      area.appendChild(wrapper);
 
       const targetX = window.innerWidth / 2;
       const targetY = window.innerHeight / 2;
 
+      // Countdown inside the dot
+      let remaining = 3;
+      const countdownInterval = setInterval(() => {
+        remaining--;
+        if (remaining > 0) {
+          countdownText.textContent = String(remaining);
+        } else {
+          countdownText.textContent = "";
+          clearInterval(countdownInterval);
+        }
+      }, 1000);
+
+      // Wait 1.5s for eyes to settle on the dot, then measure for 3s
       setTimeout(async () => {
         const accuracy = await EyeTracking.runAccuracyCheck(targetX, targetY, 3000);
         DataStore.setCalibrationAccuracy(accuracy);
 
         area.innerHTML = "";
-        instructions.textContent = `Calibration complete! Accuracy: ${Math.round(accuracy)}%`;
-        progress.textContent = "";
+        area.className = "calibration-area calib-area-complete";
 
-        const btn = document.createElement("button");
-        btn.className = "btn btn-primary";
-        btn.textContent = "Continue";
-        btn.type = "button";
-        btn.addEventListener("click", onComplete);
-        area.appendChild(btn);
-      }, 500);
+        const pct = Math.round(accuracy);
+        let quality, qualityClass;
+        if (pct >= 80) {
+          quality = "Excellent";
+          qualityClass = "calib-excellent";
+        } else if (pct >= 60) {
+          quality = "Good";
+          qualityClass = "calib-good";
+        } else {
+          quality = "Poor — consider recalibrating";
+          qualityClass = "calib-poor";
+        }
+
+        const container = document.createElement("div");
+        container.className = "calib-complete-container";
+        container.innerHTML = `
+          <p class="calib-accuracy">Calibration complete — Accuracy: ${pct}%</p>
+          <p class="calib-quality ${qualityClass}">${quality}</p>
+          <button class="btn btn-primary" type="button">Begin Study</button>
+          ${pct < 60 ? '<button class="btn btn-secondary calib-retry-btn" type="button">Recalibrate</button>' : ''}
+        `;
+        container.querySelector(".btn-primary").addEventListener("click", onComplete);
+        const retryBtn = container.querySelector(".calib-retry-btn");
+        if (retryBtn) {
+          retryBtn.addEventListener("click", () => calibration(onComplete));
+        }
+        area.appendChild(container);
+      }, 1500);
     }
 
     showPoint(0);
@@ -213,7 +295,7 @@ const Views = (() => {
             <li>The <strong>"Stop Study"</strong> button is always available if you need to quit.</li>
             <li>Please try to look at the screen throughout — your gaze is being tracked.</li>
           </ul>
-          <p>The study will now enter fullscreen mode for minimal distractions.</p>
+          <p>Please keep this window maximised for the duration of the study.</p>
         </div>
         <button id="begin-btn" class="btn btn-primary" type="button">Begin Study</button>
       </div>
@@ -237,7 +319,6 @@ const Views = (() => {
 
   function stimulus(stim, phaseIndex, stimIndex, totalInPhase) {
     let html = `<div class="screen stimulus-screen">`;
-    html += `<div class="stimulus-info">Phase ${phaseIndex + 1} &mdash; Stimulus ${stimIndex + 1} of ${totalInPhase}</div>`;
     html += `<div id="stimulus-container" class="stimulus-container">`;
 
     switch (stim.type) {
@@ -358,7 +439,8 @@ const Views = (() => {
     const headers = [
       "participantId", "timestamp", "phaseIndex", "phaseName", "stimulusIndex",
       "stimulusType", "stimulusContent", "duration", "timeSpent", "skipped",
-      "droppedOut", "gazeOnScreenPct", "gazeLookAways", "avgGazeX", "avgGazeY"
+      "partialAvoidance", "partialAvoidanceTime",
+      "droppedOut", "gazeOnScreenPct", "gazeLookAways", "avgGazeX", "avgGazeY", "gazeOnExitPct"
     ];
 
     const csv = _toCsv(headers, records);
@@ -414,6 +496,58 @@ const Views = (() => {
     return div.innerHTML;
   }
 
+  function showDimOverlay(show) {
+    let overlay = document.getElementById("dim-overlay");
+    if (show) {
+      if (!overlay) {
+        overlay = document.createElement("div");
+        overlay.id = "dim-overlay";
+        overlay.className = "dim-overlay";
+        overlay.innerHTML = `<p class="dim-prompt">Press spacebar to skip</p>`;
+        document.body.appendChild(overlay);
+      }
+      overlay.classList.add("dim-overlay-visible");
+    } else {
+      if (overlay) {
+        overlay.classList.remove("dim-overlay-visible");
+        setTimeout(() => { if (overlay.parentNode) overlay.parentNode.removeChild(overlay); }, 200);
+      }
+    }
+  }
+
+  function fixation(duration, onComplete) {
+    app().innerHTML = `
+      <div class="screen fixation-screen">
+        <div class="fixation-cross">+</div>
+      </div>
+    `;
+
+    const timeout = setTimeout(onComplete, duration * 1000);
+    return timeout;
+  }
+
+  function recovery(duration, onComplete) {
+    let remaining = duration;
+    app().innerHTML = `
+      <div class="screen recovery-screen">
+        <p class="recovery-text">Next stimulus shown in <span id="recovery-countdown">${remaining}</span> seconds</p>
+      </div>
+    `;
+
+    const countdownSpan = document.getElementById("recovery-countdown");
+    const interval = setInterval(() => {
+      remaining--;
+      if (countdownSpan) countdownSpan.textContent = remaining;
+      if (remaining <= 0) {
+        clearInterval(interval);
+        onComplete();
+      }
+    }, 1000);
+
+    // Return interval ID so it can be cancelled if study is stopped
+    return interval;
+  }
+
   return {
     welcome,
     consent,
@@ -422,6 +556,9 @@ const Views = (() => {
     phaseIntro,
     stimulus,
     phaseBreak,
+    showDimOverlay,
+    fixation,
+    recovery,
     completion,
     dropout
   };
